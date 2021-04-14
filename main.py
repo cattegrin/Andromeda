@@ -3,12 +3,12 @@ import chess.polyglot
 import chess.svg
 import chess.pgn
 import chess.engine
-from IPython.display import SVG
-import datetime
 import traceback
 from flask import Flask, Response, request, app
 import webbrowser
 import time
+import sys
+import threading
 
 app = Flask(__name__)
 
@@ -141,23 +141,22 @@ def evaluate():
         return -e
 
 
-def quiesce(a, b, d):
-    stand = evaluate()
-    if stand >= b:
+def quiesce(a, b):
+    s = evaluate()
+    if (s >= b):
         return b
-    if a < stand:
-        a = stand
+    if (a < s):
+        a = s
 
-    #print(str(d))
-    for mo in board.legal_moves:
-        if board.is_capture(mo):
-            board.push(mo)
-            score = -quiesce(-b, -a, d+1)
+    for move in board.legal_moves:
+        if board.is_capture(move):
+            board.push(move)
+            score = -quiesce(-b, -a)
             board.pop()
 
-            if score >= b:
+            if (score >= b):
                 return b
-            if score > a:
+            if (score > a):
                 a = score
     return a
 
@@ -165,7 +164,7 @@ def quiesce(a, b, d):
 def alphabeta(a, b, depth):
     best = -9999
     if depth == 0:
-        return quiesce(a, b, 1)
+        return quiesce(a, b)
     for m in board.legal_moves:
         board.push(m)
         score = -alphabeta(-b, -a, depth - 1)
@@ -185,9 +184,7 @@ def dmove(depth):
     :return: a move to play
     '''
     try:            # get moves from opening
-        m = chess.polyglot.\
-            MemoryMappedReader("C:/Users/Catte/PycharmProjects/Chess/human.bin").\
-            weighted_choice(board).move
+        m = chess.polyglot.MemoryMappedReader("C:/Users/Catte/PycharmProjects/Chess/human.bin").weighted_choice(board).move
         return m
     except IndexError:         # off main line
         best = chess.Move.null()
@@ -208,7 +205,7 @@ def dmove(depth):
 
 
 def devmove():
-    m = dmove(5)
+    m = dmove(2)
     print(m)
     board.push(m)
 
@@ -298,8 +295,14 @@ def undo():
 
 
 # Main Function
+def start_game():
+    webbrowser.open("http://127.0.0.1:5000/")
+    app.run()
+
 if __name__ == '__main__':
     count = 1
     board = chess.Board()
-    webbrowser.open("http://127.0.0.1:5000/")
-    app.run()
+    sys.setrecursionlimit(10**6)
+    threading.stack_size(200000000)
+    thread = threading.Thread(target=start_game)
+    thread.start()
