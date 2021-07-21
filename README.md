@@ -7,6 +7,7 @@ This bot is based off of the work done by Ansh Gaikwad.
   
   
 Goals:
+ - Implement board zoning and zone evaluation algorithms
  - Implement parallel processing  
  - Improve time to select a move
  - Improve quality of moves selected
